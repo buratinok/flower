@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css?family=Comfortaa:300,400,500,700&amp;subset=cyrillic');
+
+
+
+:root{
+    --colorWhite: #fff;
+    --colorPrimary: #00978F;
+    --widthContent: 1200px;
+    --globalGap: 30px;
+    --fontFamily: 'Comfortaa', cursive;
+    --fontSize: 13px;
+}
+
+
+
+.flex{
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-orient: horizontal;
+    -webkit-box-direction: normal;
+        -ms-flex-flow: row wrap;
+            flex-flow: row wrap;
+}
+
+
+
+.flex_direct_column{
+    -webkit-box-orient: vertical;
+    -webkit-box-direction: normal;
+        -ms-flex-flow: column nowrap;
+            flex-flow: column nowrap;
+     }
+
+
+
+.flex_center_center{
+    -webkit-box-align: center;
+        -ms-flex-align: center;
+            align-items: center;
+    -webkit-box-pack: center;
+        -ms-flex-pack: center;
+            justify-content: center;
+      }
+
+
+
+body, html{
+     font-family: var(--fontFamily);
+     font-size: var(--fontSize);
+ }
+
+
+
+.content{
+    display: grid;
+    margin: 0 auto;
+    color: var(--colorWhite);
+
+
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-gap: var(--globalGap);
+}
+
+
+
+.content__image{
+    grid-column: 1;
+    grid-row: 1;
+}
+
+
+
+.content__image .image {
+        width: 271px;
+    }
+
+
+
+.slide {
+    position: absolute;
+    opacity: 0;
+    z-index: 1;
+}
+
+
+
+.slide_showing_opacity {
+    opacity: 1;
+    z-index: 2;
+}
+
+
+
+.image {
+    border: 0;
+}
+
+
+
+.content__text{
+    grid-column: 1;
+    grid-row: 2;
+    color: var(--colorPrimary);
+    text-transform: uppercase;
+    text-align: justify;
+    font-stretch: condensed;
+}
+
+
+
+.fund {
+    text-align-last: justify;
+    padding: 1%;
+    line-height: 1.2;
+    float: left;
+    margin: 1%;
+    font-variant: small-caps;
+    font-stretch: extra-condensed;
+    letter-spacing: 1px;
+    white-space: pre;
+    font-size: 0.9rem;
+}
+
+
+
+.fund p{
+        margin: 0.2em 0;
+     }
+
+
+
+.fund p:nth-child(2){
+         letter-spacing: .21rem;
+     }
+
+
+
+.fund p:nth-child(3){
+         font-size: 1.1rem;
+         letter-spacing: .54rem;
+       }
+
+
+
+.fund p:nth-child(4){
+         font-size: 1.3rem;
+         letter-spacing: .23rem;
+     }
+
+
+
+.fund p:nth-child(5){
+         font-size: 1.4rem;
+         letter-spacing: .31rem;
+
+     }
+
+
+
+.fund p:nth-child(6){
+         font-size: 2rem;
+         letter-spacing: .36rem;
+
+     }
+
+
+
+.fund p:nth-child(7){
+         font-size: 3rem;
+         letter-spacing: .45rem;
+     }
