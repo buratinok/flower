@@ -1,0 +1,12 @@
+
+
+:block(content){
+    display: grid;
+    margin: 0 auto;
+    color: var(--colorWhite);
+
+
+    grid-template-columns: repeat(1, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    grid-gap: var(--globalGap);
+}

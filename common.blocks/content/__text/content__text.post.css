@@ -1,0 +1,49 @@
+:block(content):elem(text){
+    grid-column: 1;
+    grid-row: 2;
+    color: var(--colorPrimary);
+    text-transform: uppercase;
+    text-align: justify;
+    font-stretch: condensed;
+}
+
+:block(fund) {
+    text-align-last: justify;
+    padding: 1%;
+    line-height: 1.2;
+    float: left;
+    margin: 1%;
+    font-variant: small-caps;
+    font-stretch: extra-condensed;
+    letter-spacing: 1px;
+    white-space: pre;
+    font-size: 0.9rem;
+    p{
+        margin: 0.2em 0;
+    &:nth-child(2){
+         letter-spacing: .21rem;
+     }
+    &:nth-child(3){
+         font-size: 1.1rem;
+         letter-spacing: .54rem;
+       }
+    &:nth-child(4){
+         font-size: 1.3rem;
+         letter-spacing: .23rem;
+     }
+    &:nth-child(5){
+         font-size: 1.4rem;
+         letter-spacing: .31rem;
+
+     }
+    &:nth-child(6){
+         font-size: 2rem;
+         letter-spacing: .36rem;
+
+     }
+    &:nth-child(7){
+         font-size: 3rem;
+         letter-spacing: .45rem;
+     }
+     }
+}

@@ -1,0 +1,5 @@
+:block(content):elem(image){
+    grid-column: 1;
+    grid-row: 1;
+    display: inline-block;
+}
