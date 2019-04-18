@@ -6,7 +6,6 @@
     --colorWhite: #fff;
     --colorPrimary: #00978F;
     --widthContent: 1200px;
-    --globalGap: 30px;
     --fontFamily: 'Comfortaa', cursive;
     --fontSize: 13px;
 }
@@ -45,6 +44,17 @@
 
 
 
+.flex_center_start{
+         -webkit-box-align: center;
+             -ms-flex-align: center;
+                 align-items: center;
+         -webkit-box-pack: start;
+             -ms-flex-pack: start;
+                 justify-content: flex-start;
+     }
+
+
+
 body, html{
      font-family: var(--fontFamily);
      font-size: var(--fontSize);
@@ -68,33 +78,7 @@ body, html{
 .content__image{
     grid-column: 1;
     grid-row: 1;
-}
-
-
-
-.content__image .image {
-        width: 271px;
-    }
-
-
-
-.slide {
-    position: absolute;
-    opacity: 0;
-    z-index: 1;
-}
-
-
-
-.slide_showing_opacity {
-    opacity: 1;
-    z-index: 2;
-}
-
-
-
-.image {
-    border: 0;
+    display: inline-block;
 }
 
 
