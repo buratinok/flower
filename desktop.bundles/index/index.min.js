@@ -4183,7 +4183,7 @@ Snap.load("assets/image/flower.svg", function (f) {
     g27 = f.select('#flower_27');
     g28 = f.select('#flower_28');
     g29 = f.select('#flower_29');
-    g = s.group(g2,g3,g4,g5,g6,g7,g8,g10,g11,g13,g14,g16,g17,g18,g19,g20,g21,g22,g23,g24,g25,g26,g27,g28,g29);
+    var g = s.group(g2,g3,g4,g5,g6,g7,g8,g10,g11,g13,g14,g16,g17,g18,g19,g20,g21,g22,g23,g24,g25,g26,g27,g28,g29);
 
     function atributs(obj){
         obj.attr({
@@ -4194,14 +4194,49 @@ Snap.load("assets/image/flower.svg", function (f) {
         });
     };
     atributs(g);
-    function twist(obj,x,y,r,length){
+    function twist(obj,x,y,r,length) {
         var start = obj.transform();
-        obj.animate({transform: 't'+x+','+y+','+ 'r'+r },length,function(){
-            obj.animate({transform: start},length,function(){
-                twist(obj,x,y,r,length);
+        var petal = document.querySelectorAll('.menu__flower');
+        obj.animate({transform: 't' + x + ',' + y + ',' + 'r' + r}, length, function () {
+            obj.animate({transform: start}, length, function () {
+                twist(obj, x, y, r, length);
             })
-        })
+        })}
+     function foto(obj, index){
+         var start = obj.transform();
+         var petal = document.querySelectorAll('.menu__flower');
+        obj.mouseover(
+            function (){
+                //var thisBox = this.getBBox();
+                obj.attr({
+                    fill: "#e66f5b",
+                });
+
+                for (var i = 0; i <petal.length; i++){
+                    petal[index].classList.remove('menu__flower_display_none');
+                }
+            },
+        );
+        obj.mouseout(
+            function (){
+                obj.attr({
+                    fill: "#fff",
+                });
+                var petal = document.querySelectorAll('.menu__flower');
+                for (var i = 0; i <petal.length; i++){
+                    petal[index].classList.add('menu__flower_display_none');
+                }
+            },
+        );
+         obj.click(
+
+        )
+
     };
+    foto(g2, 0);
+    foto(g3, 1);
+    foto(g8, 2);
+    foto(g7, 3);
     twist(g2,-5, 0, -5, 2000);
     twist(g3,2, 0, 5, 4000);
     twist(g4,-5, 10, 0, 4000);
@@ -4222,17 +4257,13 @@ Snap.load("assets/image/flower.svg", function (f) {
     twist(g24,5, 0, 5, 5000);
     twist(g25,5, 0, 5, 5000);
     twist(g26,5, 0, 5, 5000);
+    twist(g27,0, 0, 0, 0);
     twist(g28,10, -5, 2, 2000);
     twist(g29,-7, 10, 2, 3000);
-  /*          g.hover(
-                function (){
-                    g.attr({
-                        fill: "#f0f",
-                        stroke: "blue",
-                        strokeWidth: 4
-                    });
-                },
 
+
+
+/*
         function animOn() {
             g.animate({
                 transform: "t10,-300, r0"
@@ -4242,13 +4273,1508 @@ Snap.load("assets/image/flower.svg", function (f) {
             g.nimate({
                 transform: "t10,305, r50"
             }, 4500, mina.easeinout);
-        }
-    );
-   // s.append(ga)*/
+        }*/
+
+
     s.append(g)
 })
 })(jQuery);
 /* end: ../../common.blocks/svg/svg.js */
+/* begin: ../../node_modules/bem-components/common.blocks/menu/menu.js */
+/**
+ * @module menu
+ */
+
+modules.define(
+    'menu',
+    ['i-bem-dom', 'control', 'keyboard__codes', 'menu__item'],
+    function(provide, bemDom, Control, keyCodes, MenuItem) {
+
+/** @const Number */
+var TIMEOUT_KEYBOARD_SEARCH = 1500;
+
+/**
+ * @exports
+ * @class menu
+ * @augments control
+ * @bem
+ */
+provide(bemDom.declBlock(this.name, Control, /** @lends menu.prototype */{
+    onSetMod : {
+        'js' : {
+            'inited' : function() {
+                this.__base.apply(this, arguments);
+                this._hoveredItem = null;
+                this._items = null;
+
+                this._lastTyping = {
+                    char : '',
+                    text : '',
+                    index : 0,
+                    time : 0
+                };
+            }
+        },
+
+        'disabled' : {
+            '*' : function(modName, modVal) {
+                this.__base.apply(this, arguments);
+                this.getItems().setMod(modName, modVal);
+            },
+            'true' : function() {
+                this.__base.apply(this, arguments);
+                this.domElem.attr('aria-disabled', true);
+            },
+            '' : function() {
+                this.__base.apply(this, arguments);
+                this.domElem.removeAttr('aria-disabled');
+            }
+        }
+    },
+
+    /**
+     * Returns items
+     * @returns {menu__item[]}
+     */
+    getItems : function() {
+        return this._items || (this._items = this.findChildElems('item'));
+    },
+
+    /**
+     * Sets content
+     * @param {String|jQuery} content
+     * @returns {menu} this
+     */
+    setContent : function(content) {
+        bemDom.update(this.domElem, content);
+        this._hoveredItem = null;
+        this._items = null;
+        return this;
+    },
+
+    /**
+     * Search menu item by keyboard event
+     * @param {jQuery.Event} e
+     * @returns {menu__item}
+     */
+    searchItemByKeyboardEvent : function(e) {
+        var currentTime = +new Date(),
+            charCode = e.charCode,
+            char = String.fromCharCode(charCode).toLowerCase(),
+            lastTyping = this._lastTyping,
+            index = lastTyping.index,
+            isSameChar = char === lastTyping.char && lastTyping.text.length === 1,
+            items = this.getItems();
+
+        if(charCode <= keyCodes.SPACE || e.ctrlKey || e.altKey || e.metaKey) {
+            lastTyping.time = currentTime;
+            return null;
+        }
+
+        if(currentTime - lastTyping.time > TIMEOUT_KEYBOARD_SEARCH || isSameChar) {
+            lastTyping.text = char;
+        } else {
+            lastTyping.text += char;
+        }
+
+        lastTyping.char = char;
+        lastTyping.time = currentTime;
+
+        // If key is pressed again, then continue to search to next menu item
+        if(isSameChar && items.get(index).getText().search(lastTyping.char) === 0) {
+            index = index >= items.size() - 1? 0 : index + 1;
+        }
+
+        // 2 passes: from index to items.size() and from 0 to index.
+        var i = index, len = items.size();
+        while(i < len) {
+            if(this._doesItemMatchText(items.get(i), lastTyping.text)) {
+                lastTyping.index = i;
+                return items.get(i);
+            }
+
+            i++;
+
+            if(i === items.size()) {
+                i = 0;
+                len = index;
+            }
+        }
+
+        return null;
+    },
+
+    /** @override **/
+    _onFocus : function() {
+        this.__base.apply(this, arguments);
+        this._domEvents(bemDom.doc) // NOTE: should be called after __base
+            .on('keydown', this._onKeyDown)
+            .on('keypress', this._onKeyPress);
+    },
+
+    /** @override **/
+    _onBlur : function() {
+        this._domEvents(bemDom.doc)
+            .un('keydown', this._onKeyDown)
+            .un('keypress', this._onKeyPress);
+
+        this.__base.apply(this, arguments);
+        this._hoveredItem && this._hoveredItem.delMod('hovered');
+    },
+
+    /**
+     * @param {Object} item
+     * @private
+     */
+    _onItemHover : function(item) {
+        if(item.hasMod('hovered')) {
+            this._hoveredItem && this._hoveredItem.delMod('hovered');
+            this._scrollToItem(this._hoveredItem = item);
+            this.domElem.attr('aria-activedescendant', item.domElem.attr('id'));
+        } else if(this._hoveredItem === item) {
+            this._hoveredItem = null;
+            this.domElem.removeAttr('aria-activedescendant');
+        }
+        this._emit('item-hover', { item : item });
+    },
+
+    /**
+     * @param {Object} item
+     * @private
+     */
+    _scrollToItem : function(item) {
+        var domElemOffsetTop = this.domElem.offset().top,
+            itemDomElemOffsetTop = item.domElem.offset().top,
+            relativeScroll;
+
+        if((relativeScroll = itemDomElemOffsetTop - domElemOffsetTop) < 0 ||
+            (relativeScroll =
+                itemDomElemOffsetTop +
+                item.domElem.outerHeight() -
+                domElemOffsetTop -
+                this.domElem.outerHeight()) > 0) {
+            this.domElem.scrollTop(this.domElem.scrollTop() + relativeScroll);
+        }
+    },
+
+    /**
+     * @param {Object} item
+     * @param {Object} data
+     * @private
+     */
+    _onItemClick : function(item, data) {
+        this._emit('item-click', { item : item, source : data.source });
+    },
+
+    /**
+     * @param {jQuery.Event} e
+     * @private
+     */
+    _onKeyDown : function(e) {
+        var keyCode = e.keyCode,
+            isArrow = keyCode === keyCodes.UP || keyCode === keyCodes.DOWN;
+
+        if(isArrow && !e.shiftKey) {
+            e.preventDefault();
+
+            var dir = keyCode - 39, // using the features of key codes for "up"/"down" ;-)
+                items = this.getItems(),
+                len = items.size(),
+                hoveredIdx = items.toArray().indexOf(this._hoveredItem),
+                nextIdx = hoveredIdx,
+                i = 0;
+
+            do {
+                nextIdx += dir;
+                nextIdx = nextIdx < 0? len - 1 : nextIdx >= len? 0 : nextIdx;
+                if(++i === len) return; // if we have no next item to hover
+            } while(items.get(nextIdx).hasMod('disabled'));
+
+            this._lastTyping.index = nextIdx;
+
+            items.get(nextIdx).setMod('hovered');
+        }
+    },
+
+    /**
+     * @param {jQuery.Event} e
+     * @private
+     */
+    _onKeyPress : function(e) {
+        var item = this.searchItemByKeyboardEvent(e);
+        item && item.setMod('hovered');
+    },
+
+    /**
+     * @param {Object} item
+     * @param {String} text
+     * @private
+     */
+    _doesItemMatchText : function(item, text) {
+        return !item.hasMod('disabled') &&
+            item.getText().toLowerCase().search(text) === 0;
+    }
+}, /** @lends menu */{
+    lazyInit : true,
+    onInit : function() {
+        this._events(MenuItem)
+            .on({ modName : 'hovered', modVal : '*' }, function(e) {
+                this._onItemHover(e.target);
+            })
+            .on('click', function(e, data) {
+                this._onItemClick(e.target, data);
+            });
+
+        return this.__base.apply(this, arguments);
+    }
+}));
+
+});
+
+/* end: ../../node_modules/bem-components/common.blocks/menu/menu.js */
+/* begin: ../../node_modules/bem-components/common.blocks/control/control.js */
+/**
+ * @module control
+ */
+
+modules.define(
+    'control',
+    ['i-bem-dom', 'dom', 'next-tick'],
+    function(provide, bemDom, dom, nextTick) {
+
+/**
+ * @exports
+ * @class control
+ * @abstract
+ * @bem
+ */
+provide(bemDom.declBlock(this.name, /** @lends control.prototype */{
+    beforeSetMod : {
+        'focused' : {
+            'true' : function() {
+                return !this.hasMod('disabled');
+            }
+        }
+    },
+
+    onSetMod : {
+        'js' : {
+            'inited' : function() {
+                var controlDomElem = this._elem('control').domElem;
+
+                this._focused = dom.containsFocus(controlDomElem);
+                this._focused?
+                    // if control is already in focus, we need to force _onFocus
+                    this._onFocus() :
+                    // if block already has focused mod, we need to focus control
+                    this.hasMod('focused') && this._focus();
+
+                this._tabIndex = typeof this.params.tabIndex !== 'undefined'?
+                    this.params.tabIndex :
+                    controlDomElem.attr('tabindex');
+
+                if(this.hasMod('disabled') && this._tabIndex !== 'undefined')
+                    controlDomElem.removeAttr('tabindex');
+            }
+        },
+
+        'focused' : {
+            'true' : function() {
+                this._focused || this._focus();
+            },
+
+            '' : function() {
+                this._focused && this._blur();
+            }
+        },
+
+        'disabled' : {
+            'true' : function() {
+                this._elem('control').domElem.attr('disabled', true);
+                this.delMod('focused');
+                typeof this._tabIndex !== 'undefined' &&
+                    this._elem('control').domElem.removeAttr('tabindex');
+            },
+
+            '' : function() {
+                this._elem('control').domElem.removeAttr('disabled');
+                typeof this._tabIndex !== 'undefined' &&
+                    this._elem('control').domElem.attr('tabindex', this._tabIndex);
+            }
+        }
+    },
+
+    /**
+     * Returns name of control
+     * @returns {String}
+     */
+    getName : function() {
+        return this._elem('control').domElem.attr('name') || '';
+    },
+
+    /**
+     * Returns control value
+     * @returns {String}
+     */
+    getVal : function() {
+        return this._elem('control').domElem.val();
+    },
+
+    _onFocus : function() {
+        this._focused = true;
+        this.setMod('focused');
+    },
+
+    _onBlur : function() {
+        this._focused = false;
+        this.delMod('focused');
+    },
+
+    _focus : function() {
+        dom.isFocusable(this._elem('control').domElem)?
+            this._elem('control').domElem.focus() :
+            this._onFocus(); // issues/1456
+    },
+
+    _blur : function() {
+        // force both `blur` and `_onBlur` for FF which can have disabled element as `document.activeElement`
+        this._elem('control').domElem.blur();
+        this._onBlur();
+    }
+}, /** @lends control */{
+    lazyInit : true,
+    onInit : function() {
+        this._domEvents('control')
+            .on('focusin', function() {
+                this._focused || this._onFocus(); // to prevent double call of _onFocus in case of init by focus
+            })
+            .on('focusout', this.prototype._onBlur);
+
+        var focused = dom.getFocused();
+        if(focused.hasClass(this._buildClassName('control'))) {
+            var _this = this;
+            nextTick(function() {
+                if(focused[0] === dom.getFocused()[0]) {
+                    var block = focused.closest(_this._buildSelector());
+                    block && block.bem(_this);
+                }
+            });
+        }
+    }
+}));
+
+});
+
+/* end: ../../node_modules/bem-components/common.blocks/control/control.js */
+/* begin: ../../node_modules/bem-components/desktop.blocks/control/control.js */
+/** @module control */
+
+modules.define(
+    'control', ['i-bem-dom'],
+    function(provide, bemDom, Control) {
+
+provide(bemDom.declBlock(Control, {
+    beforeSetMod : {
+        'hovered' : {
+            'true' : function() {
+                return !this.hasMod('disabled');
+            }
+        }
+    },
+
+    onSetMod : {
+        'disabled' : {
+            'true' : function() {
+                this.__base.apply(this, arguments);
+                this.delMod('hovered');
+            }
+        },
+
+        'hovered' : {
+            'true' : function() {
+                this._domEvents().on('mouseleave', this._onMouseLeave);
+            },
+
+            '' : function() {
+                this._domEvents().un('mouseleave', this._onMouseLeave);
+            }
+        }
+    },
+
+    _onMouseOver : function() {
+        this.setMod('hovered');
+    },
+
+    _onMouseLeave : function() {
+        this.delMod('hovered');
+    }
+}, {
+    onInit : function() {
+        this._domEvents().on('mouseover', this.prototype._onMouseOver);
+        return this.__base.apply(this, arguments);
+    }
+}));
+
+});
+
+/* end: ../../node_modules/bem-components/desktop.blocks/control/control.js */
+/* begin: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointerclick.js */
+modules.define('jquery', ['next-tick'], function(provide, nextTick, $) {
+
+var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream,
+    event = $.event.special.pointerclick = {
+        setup : function() {
+            if(isIOS) {
+                $(this)
+                    .on('pointerdown', event.onPointerdown)
+                    .on('pointerup', event.onPointerup)
+                    .on('pointerleave pointercancel', event.onPointerleave);
+            } else {
+                $(this).on('click', event.handler);
+            }
+        },
+
+        teardown : function() {
+            if(isIOS) {
+                $(this)
+                    .off('pointerdown', event.onPointerdown)
+                    .off('pointerup', event.onPointerup)
+                    .off('pointerleave pointercancel', event.onPointerleave);
+            } else {
+                $(this).off('click', event.handler);
+            }
+        },
+
+        handler : function(e) {
+            if(!e.button) {
+                var type = e.type;
+                e.type = 'pointerclick';
+                $.event.dispatch.apply(this, arguments);
+                e.type = type;
+            }
+        },
+
+        onPointerdown : function(e) {
+            pointerdownEvent = e;
+        },
+
+        onPointerleave : function() {
+            pointerdownEvent = null;
+        },
+
+        onPointerup : function(e) {
+            if(!pointerdownEvent) return;
+
+            if(!pointerDownUpInProgress) {
+                nextTick(function() {
+                    pointerDownUpInProgress = false;
+                    pointerdownEvent = null;
+                });
+                pointerDownUpInProgress = true;
+            }
+
+            event.handler.apply(this, arguments);
+        }
+    },
+    pointerDownUpInProgress = false,
+    pointerdownEvent;
+
+provide($);
+
+});
+
+/* end: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointerclick.js */
+/* begin: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointernative.js */
+;(function(global, factory) {
+
+if(typeof modules === 'object' && modules.isDefined('jquery')) {
+    modules.define('jquery', function(provide, $) {
+        factory(this.global, $);
+        provide($);
+    });
+} else if(typeof jQuery === 'function') {
+    factory(global, jQuery);
+}
+
+}(this, function(window, $) {
+
+var jqEvent = $.event;
+
+// NOTE: Remove jQuery special fixes for pointerevents – we fix them ourself
+delete jqEvent.special.pointerenter;
+delete jqEvent.special.pointerleave;
+
+if(window.PointerEvent) {
+    // Have native PointerEvent support, nothing to do than
+    return;
+}
+
+/*!
+ * Most of source code is taken from PointerEvents Polyfill
+ * written by Polymer Team (https://github.com/Polymer/PointerEvents)
+ * and licensed under the BSD License.
+ */
+
+var doc = document,
+    HAS_BITMAP_TYPE = window.MSPointerEvent && typeof window.MSPointerEvent.MSPOINTER_TYPE_MOUSE === 'number',
+    undef;
+
+/*!
+ * Returns a snapshot of the event, with writable properties.
+ *
+ * @param {Event} event An event that contains properties to copy.
+ * @returns {Object} An object containing shallow copies of `inEvent`'s properties.
+ */
+function cloneEvent(event) {
+    var eventCopy = $.extend(new $.Event(), event);
+    if(event.preventDefault) {
+        eventCopy.preventDefault = function() {
+            event.preventDefault();
+        };
+    }
+    return eventCopy;
+}
+
+/*!
+ * Dispatches the event to the target, taking event's bubbling into account.
+ */
+function dispatchEvent(event, target) {
+    return event.bubbles?
+        jqEvent.trigger(event, null, target) :
+        jqEvent.dispatch.call(target, event);
+}
+
+var MOUSE_PROPS = {
+        bubbles : false,
+        cancelable : false,
+        view : null,
+        detail : null,
+        screenX : 0,
+        screenY : 0,
+        clientX : 0,
+        clientY : 0,
+        ctrlKey : false,
+        altKey : false,
+        shiftKey : false,
+        metaKey : false,
+        button : 0,
+        relatedTarget : null,
+        pageX : 0,
+        pageY : 0
+    },
+    mouseProps = Object.keys(MOUSE_PROPS),
+    mousePropsLen = mouseProps.length,
+    mouseDefaults = mouseProps.map(function(prop) { return MOUSE_PROPS[prop] });
+
+/*!
+ * Pointer event constructor
+ *
+ * @class PointerEvent
+ * @param {String} type
+ * @param {Object} [params]
+ * @returns {Event}
+ * @constructor
+ */
+function PointerEvent(type, params) {
+    params || (params = {});
+
+    var e = $.Event(type);
+
+    // define inherited MouseEvent properties
+    for(var i = 0, p; i < mousePropsLen; i++) {
+        p = mouseProps[i];
+        e[p] = params[p] || mouseDefaults[i];
+    }
+
+    e.buttons = params.buttons || 0;
+
+    // add x/y properties aliased to clientX/Y
+    e.x = e.clientX;
+    e.y = e.clientY;
+
+    // Spec requires that pointers without pressure specified use 0.5 for down
+    // state and 0 for up state.
+    var pressure = 0;
+    if(params.pressure) {
+        pressure = params.pressure;
+    } else {
+        pressure = e.buttons? 0.5 : 0;
+    }
+
+    // define the properties of the PointerEvent interface
+    e.pointerId = params.pointerId || 0;
+    e.width = params.width || 0;
+    e.height = params.height || 0;
+    e.pressure = pressure;
+    e.tiltX = params.tiltX || 0;
+    e.tiltY = params.tiltY || 0;
+    e.pointerType = params.pointerType || '';
+    e.hwTimestamp = params.hwTimestamp || 0;
+    e.isPrimary = params.isPrimary || false;
+
+    // add some common jQuery properties
+    e.which = typeof params.which === 'undefined'? 1 : params.which;
+
+    return e;
+}
+
+function SparseArrayMap() {
+    this.array = [];
+    this.size = 0;
+}
+
+SparseArrayMap.prototype = {
+    set : function(k, v) {
+        if(v === undef) {
+            return this['delete'](k);
+        }
+        if(!this.has(k)) {
+            this.size++;
+        }
+        this.array[k] = v;
+    },
+
+    has : function(k) {
+        return this.array[k] !== undef;
+    },
+
+    'delete' : function(k) {
+        if(this.has(k)){
+            delete this.array[k];
+            this.size--;
+        }
+    },
+
+    get : function(k) {
+        return this.array[k];
+    },
+
+    clear : function() {
+        this.array.length = 0;
+        this.size = 0;
+    },
+
+    // return value, key, map
+    forEach : function(callback, ctx) {
+        return this.array.forEach(function(v, k) {
+            callback.call(ctx, v, k, this);
+        }, this);
+    }
+};
+
+// jscs:disable requireMultipleVarDecl
+var PointerMap = window.Map && window.Map.prototype.forEach? Map : SparseArrayMap,
+    pointerMap = new PointerMap();
+
+var dispatcher = {
+    eventMap : {},
+    eventSourceList : [],
+
+    /*!
+     * Add a new event source that will generate pointer events
+     */
+    registerSource : function(name, source) {
+        var newEvents = source.events;
+        if(newEvents) {
+            newEvents.forEach(function(e) {
+                source[e] && (this.eventMap[e] = function() { source[e].apply(source, arguments) });
+            }, this);
+            this.eventSourceList.push(source);
+        }
+    },
+
+    register : function(element) {
+        var len = this.eventSourceList.length;
+        for(var i = 0, es; (i < len) && (es = this.eventSourceList[i]); i++) {
+            // call eventsource register
+            es.register.call(es, element);
+        }
+    },
+
+    unregister : function(element) {
+        var l = this.eventSourceList.length;
+        for(var i = 0, es; (i < l) && (es = this.eventSourceList[i]); i++) {
+            // call eventsource register
+            es.unregister.call(es, element);
+        }
+    },
+
+    down : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointerdown', event);
+    },
+
+    move : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointermove', event);
+    },
+
+    up : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointerup', event);
+    },
+
+    enter : function(event) {
+        event.bubbles = false;
+        this.fireEvent('pointerenter', event);
+    },
+
+    leave : function(event) {
+        event.bubbles = false;
+        this.fireEvent('pointerleave', event);
+    },
+
+    over : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointerover', event);
+    },
+
+    out : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointerout', event);
+    },
+
+    cancel : function(event) {
+        event.bubbles = true;
+        this.fireEvent('pointercancel', event);
+    },
+
+    leaveOut : function(event) {
+        this.out(event);
+        this.enterLeave(event, this.leave);
+    },
+
+    enterOver : function(event) {
+        this.over(event);
+        this.enterLeave(event, this.enter);
+    },
+
+    enterLeave : function(event, fn) {
+        var target = event.target,
+            relatedTarget = event.relatedTarget;
+
+        if(!this.contains(target, relatedTarget)) {
+            while(target && target !== relatedTarget) {
+                event.target = target;
+                fn.call(this, event);
+
+                target = target.parentNode;
+            }
+        }
+    },
+
+    contains : function(target, relatedTarget) {
+        return target === relatedTarget || $.contains(target, relatedTarget);
+    },
+
+    // LISTENER LOGIC
+    eventHandler : function(e) {
+        // This is used to prevent multiple dispatch of pointerevents from
+        // platform events. This can happen when two elements in different scopes
+        // are set up to create pointer events, which is relevant to Shadow DOM.
+        if(e._handledByPE) {
+            return;
+        }
+
+        var type = e.type, fn;
+        (fn = this.eventMap && this.eventMap[type]) && fn(e);
+
+        e._handledByPE = true;
+    },
+
+    /*!
+     * Sets up event listeners
+     */
+    listen : function(target, events) {
+        events.forEach(function(e) {
+            this.addEvent(target, e);
+        }, this);
+    },
+
+    /*!
+     * Removes event listeners
+     */
+    unlisten : function(target, events) {
+        events.forEach(function(e) {
+            this.removeEvent(target, e);
+        }, this);
+    },
+
+    addEvent : function(target, eventName) {
+        $(target).on(eventName, boundHandler);
+    },
+
+    removeEvent : function(target, eventName) {
+        $(target).off(eventName, boundHandler);
+    },
+
+    getTarget : function(event) {
+        return event._target;
+    },
+
+    /*!
+     * Creates a new Event of type `type`, based on the information in `event`
+     */
+    makeEvent : function(type, event) {
+        var e = new PointerEvent(type, event);
+        if(event.preventDefault) {
+            e.preventDefault = event.preventDefault;
+        }
+
+        e._target = e._target || event.target;
+
+        return e;
+    },
+
+    /*!
+     * Dispatches the event to its target
+     */
+    dispatchEvent : function(event) {
+        var target = this.getTarget(event);
+        if(target) {
+            if(!event.target) {
+                event.target = target;
+            }
+
+            return dispatchEvent(event, target);
+        }
+    },
+
+    /*!
+     * Makes and dispatch an event in one call
+     */
+    fireEvent : function(type, event) {
+        var e = this.makeEvent(type, event);
+        return this.dispatchEvent(e);
+    }
+};
+
+function boundHandler() {
+    dispatcher.eventHandler.apply(dispatcher, arguments);
+}
+
+var CLICK_COUNT_TIMEOUT = 200,
+    // Radius around touchend that swallows mouse events
+    MOUSE_DEDUP_DIST = 25,
+    MOUSE_POINTER_ID = 1,
+    // This should be long enough to ignore compat mouse events made by touch
+    TOUCH_DEDUP_TIMEOUT = 2500,
+    // A distance for which touchmove should fire pointercancel event
+    TOUCHMOVE_HYSTERESIS = 20;
+
+// handler block for native mouse events
+var mouseEvents = {
+    POINTER_TYPE : 'mouse',
+    events : [
+        'mousedown',
+        'mousemove',
+        'mouseup',
+        'mouseover',
+        'mouseout'
+    ],
+
+    register : function(target) {
+        dispatcher.listen(target, this.events);
+    },
+
+    unregister : function(target) {
+        dispatcher.unlisten(target, this.events);
+    },
+
+    lastTouches : [],
+
+    // collide with the global mouse listener
+    isEventSimulatedFromTouch : function(event) {
+        var lts = this.lastTouches,
+            x = event.clientX,
+            y = event.clientY;
+
+        for(var i = 0, l = lts.length, t; i < l && (t = lts[i]); i++) {
+            // simulated mouse events will be swallowed near a primary touchend
+            var dx = Math.abs(x - t.x), dy = Math.abs(y - t.y);
+            if(dx <= MOUSE_DEDUP_DIST && dy <= MOUSE_DEDUP_DIST) {
+                return true;
+            }
+        }
+    },
+
+    prepareEvent : function(event) {
+        var e = cloneEvent(event);
+        e.pointerId = MOUSE_POINTER_ID;
+        e.isPrimary = true;
+        e.pointerType = this.POINTER_TYPE;
+        return e;
+    },
+
+    mousedown : function(event) {
+        if(!this.isEventSimulatedFromTouch(event)) {
+            if(pointerMap.has(MOUSE_POINTER_ID)) {
+                // http://crbug/149091
+                this.cancel(event);
+            }
+
+            pointerMap.set(MOUSE_POINTER_ID, event);
+
+            var e = this.prepareEvent(event);
+            dispatcher.down(e);
+        }
+    },
+
+    mousemove : function(event) {
+        if(!this.isEventSimulatedFromTouch(event)) {
+            var e = this.prepareEvent(event);
+            dispatcher.move(e);
+        }
+    },
+
+    mouseup : function(event) {
+        if(!this.isEventSimulatedFromTouch(event)) {
+            var p = pointerMap.get(MOUSE_POINTER_ID);
+            if(p && p.button === event.button) {
+                var e = this.prepareEvent(event);
+                dispatcher.up(e);
+                this.cleanupMouse();
+            }
+        }
+    },
+
+    mouseover : function(event) {
+        if(!this.isEventSimulatedFromTouch(event)) {
+            var e = this.prepareEvent(event);
+            dispatcher.enterOver(e);
+        }
+    },
+
+    mouseout : function(event) {
+        if(!this.isEventSimulatedFromTouch(event)) {
+            var e = this.prepareEvent(event);
+            dispatcher.leaveOut(e);
+        }
+    },
+
+    cancel : function(inEvent) {
+        var e = this.prepareEvent(inEvent);
+        dispatcher.cancel(e);
+        this.cleanupMouse();
+    },
+
+    cleanupMouse : function() {
+        pointerMap['delete'](MOUSE_POINTER_ID);
+    }
+};
+
+var touchEvents = {
+    events : [
+        'touchstart',
+        'touchmove',
+        'touchend',
+        'touchcancel'
+    ],
+
+    register : function(target) {
+        dispatcher.listen(target, this.events);
+    },
+
+    unregister : function(target) {
+        dispatcher.unlisten(target, this.events);
+    },
+
+    POINTER_TYPE : 'touch',
+    clickCount : 0,
+    resetId : null,
+    firstTouch : null,
+
+    isPrimaryTouch : function(touch) {
+        return this.firstTouch === touch.identifier;
+    },
+
+    /*!
+     * Sets primary touch if there no pointers, or the only pointer is the mouse
+     */
+    setPrimaryTouch : function(touch) {
+        if(pointerMap.size === 0 ||
+                (pointerMap.size === 1 && pointerMap.has(MOUSE_POINTER_ID))) {
+            this.firstTouch = touch.identifier;
+            this.firstXY = { X : touch.clientX, Y : touch.clientY };
+            this.scrolling = null;
+
+            this.cancelResetClickCount();
+        }
+    },
+
+    removePrimaryPointer : function(pointer) {
+        if(pointer.isPrimary) {
+            this.firstTouch = null;
+            // TODO(@narqo): It seems that, flushing `firstXY` flag explicitly in `touchmove` handler is enough.
+            // Original code from polymer doing `this.firstXY = null` on every `removePrimaryPointer` call, but looks
+            // like it is harmful in some of our usecases.
+            this.resetClickCount();
+        }
+    },
+
+    resetClickCount : function() {
+        var _this = this;
+        this.resetId = setTimeout(function() {
+            _this.clickCount = 0;
+            _this.resetId = null;
+        }, CLICK_COUNT_TIMEOUT);
+    },
+
+    cancelResetClickCount : function() {
+        this.resetId && clearTimeout(this.resetId);
+    },
+
+    typeToButtons : function(type) {
+        return type === 'touchstart' || type === 'touchmove'? 1 : 0;
+    },
+
+    findTarget : function(event) {
+        // Currently we don't interested in shadow dom handling
+        return doc.elementFromPoint(event.clientX, event.clientY);
+    },
+
+    touchToPointer : function(touch) {
+        var cte = this.currentTouchEvent,
+            e = cloneEvent(touch);
+
+        // Spec specifies that pointerId 1 is reserved for Mouse.
+        // Touch identifiers can start at 0.
+        // Add 2 to the touch identifier for compatibility.
+        e.pointerId = touch.identifier + 2;
+        e.target = this.findTarget(e);
+        e.bubbles = true;
+        e.cancelable = true;
+        e.detail = this.clickCount;
+        e.button = 0;
+        e.buttons = this.typeToButtons(cte.type);
+        e.width = touch.webkitRadiusX || touch.radiusX || 0;
+        e.height = touch.webkitRadiusY || touch.radiusY || 0;
+        e.pressure = touch.mozPressure || touch.webkitForce || touch.force || 0.5;
+        e.isPrimary = this.isPrimaryTouch(touch);
+        e.pointerType = this.POINTER_TYPE;
+
+        // forward touch preventDefaults
+        var _this = this;
+        e.preventDefault = function() {
+            _this.scrolling = false;
+            _this.firstXY = null;
+            cte.preventDefault();
+        };
+
+        return e;
+    },
+
+    processTouches : function(event, fn) {
+        var tl = event.originalEvent.changedTouches;
+        this.currentTouchEvent = event;
+        for(var i = 0, t; i < tl.length; i++) {
+            t = tl[i];
+            fn.call(this, this.touchToPointer(t));
+        }
+    },
+
+    shouldScroll : function(touchEvent) {
+        // return "true" for things to be much easier
+        return true;
+    },
+
+    findTouch : function(touches, pointerId) {
+        for(var i = 0, l = touches.length, t; i < l && (t = touches[i]); i++) {
+            if(t.identifier === pointerId) {
+                return true;
+            }
+        }
+    },
+
+    /*!
+     * In some instances, a touchstart can happen without a touchend.
+     * This leaves the pointermap in a broken state.
+     * Therefore, on every touchstart, we remove the touches
+     * that did not fire a touchend event.
+     *
+     * To keep state globally consistent, we fire a pointercancel
+     * for this "abandoned" touch
+     */
+    vacuumTouches : function(touchEvent) {
+        var touches = touchEvent.touches;
+        // `pointermap.size` should be less than length of touches here, as the touchstart has not
+        // been processed yet.
+        if(pointerMap.size >= touches.length) {
+            var d = [];
+
+            pointerMap.forEach(function(pointer, pointerId) {
+                // Never remove pointerId == 1, which is mouse.
+                // Touch identifiers are 2 smaller than their pointerId, which is the
+                // index in pointermap.
+                if(pointerId === MOUSE_POINTER_ID || this.findTouch(touches, pointerId - 2)) return;
+                d.push(pointer.outEvent);
+            }, this);
+
+            d.forEach(this.cancelOut, this);
+        }
+    },
+
+    /*!
+     * Prevents synth mouse events from creating pointer events
+     */
+    dedupSynthMouse : function(touchEvent) {
+        var lts = mouseEvents.lastTouches,
+            t = touchEvent.changedTouches[0];
+
+        // only the primary finger will synth mouse events
+        if(this.isPrimaryTouch(t)) {
+            // remember x/y of last touch
+            var lt = { x : t.clientX, y : t.clientY };
+            lts.push(lt);
+
+            setTimeout(function() {
+                var i = lts.indexOf(lt);
+                i > -1 && lts.splice(i, 1);
+            }, TOUCH_DEDUP_TIMEOUT);
+        }
+    },
+
+    touchstart : function(event) {
+        var touchEvent = event.originalEvent;
+
+        this.vacuumTouches(touchEvent);
+        this.setPrimaryTouch(touchEvent.changedTouches[0]);
+        this.dedupSynthMouse(touchEvent);
+
+        if(!this.scrolling) {
+            this.clickCount++;
+            this.processTouches(event, this.overDown);
+        }
+    },
+
+    touchmove : function(event) {
+        var touchEvent = event.originalEvent;
+        if(!this.scrolling) {
+            if(this.scrolling === null && this.shouldScroll(touchEvent)) {
+                this.scrolling = true;
+            } else {
+                event.preventDefault();
+                this.processTouches(event, this.moveOverOut);
+            }
+        } else if(this.firstXY) {
+            var firstXY = this.firstXY,
+                touch = touchEvent.changedTouches[0],
+                dx = touch.clientX - firstXY.X,
+                dy = touch.clientY - firstXY.Y,
+                dd = Math.sqrt(dx * dx + dy * dy);
+            if(dd >= TOUCHMOVE_HYSTERESIS) {
+                this.touchcancel(event);
+                this.scrolling = true;
+                this.firstXY = null;
+            }
+        }
+    },
+
+    touchend : function(event) {
+        var touchEvent = event.originalEvent;
+        this.dedupSynthMouse(touchEvent);
+        this.processTouches(event, this.upOut);
+    },
+
+    touchcancel : function(event) {
+        this.processTouches(event, this.cancelOut);
+    },
+
+    overDown : function(pEvent) {
+        var target = pEvent.target;
+        pointerMap.set(pEvent.pointerId, {
+            target : target,
+            outTarget : target,
+            outEvent : pEvent
+        });
+        dispatcher.over(pEvent);
+        dispatcher.enter(pEvent);
+        dispatcher.down(pEvent);
+    },
+
+    moveOverOut : function(pEvent) {
+        var pointer = pointerMap.get(pEvent.pointerId);
+
+        // a finger drifted off the screen, ignore it
+        if(!pointer) {
+            return;
+        }
+
+        dispatcher.move(pEvent);
+
+        var outEvent = pointer.outEvent,
+            outTarget = pointer.outTarget;
+
+        if(outEvent && outTarget !== pEvent.target) {
+            pEvent.relatedTarget = outTarget;
+            outEvent.relatedTarget = pEvent.target;
+            // recover from retargeting by shadow
+            outEvent.target = outTarget;
+
+            if(pEvent.target) {
+                dispatcher.leaveOut(outEvent);
+                dispatcher.enterOver(pEvent);
+            } else {
+                // clean up case when finger leaves the screen
+                pEvent.target = outTarget;
+                pEvent.relatedTarget = null;
+                this.cancelOut(pEvent);
+            }
+        }
+
+        pointer.outEvent = pEvent;
+        pointer.outTarget = pEvent.target;
+    },
+
+    upOut : function(pEvent) {
+        dispatcher.up(pEvent);
+        dispatcher.out(pEvent);
+        dispatcher.leave(pEvent);
+
+        this.cleanUpPointer(pEvent);
+    },
+
+    cancelOut : function(pEvent) {
+        dispatcher.cancel(pEvent);
+        dispatcher.out(pEvent);
+        dispatcher.leave(pEvent);
+        this.cleanUpPointer(pEvent);
+    },
+
+    cleanUpPointer : function(pEvent) {
+        pointerMap['delete'](pEvent.pointerId);
+        this.removePrimaryPointer(pEvent);
+    }
+};
+
+var msEvents = {
+    events : [
+        'MSPointerDown',
+        'MSPointerMove',
+        'MSPointerUp',
+        'MSPointerOut',
+        'MSPointerOver',
+        'MSPointerCancel'
+    ],
+
+    register : function(target) {
+        dispatcher.listen(target, this.events);
+    },
+
+    unregister : function(target) {
+        dispatcher.unlisten(target, this.events);
+    },
+
+    POINTER_TYPES : [
+        '',
+        'unavailable',
+        'touch',
+        'pen',
+        'mouse'
+    ],
+
+    prepareEvent : function(event) {
+        var e = cloneEvent(event);
+        HAS_BITMAP_TYPE && (e.pointerType = this.POINTER_TYPES[event.pointerType]);
+        return e;
+    },
+
+    MSPointerDown : function(event) {
+        pointerMap.set(event.pointerId, event);
+        var e = this.prepareEvent(event);
+        dispatcher.down(e);
+    },
+
+    MSPointerMove : function(event) {
+        var e = this.prepareEvent(event);
+        dispatcher.move(e);
+    },
+
+    MSPointerUp : function(event) {
+        var e = this.prepareEvent(event);
+        dispatcher.up(e);
+        this.cleanup(event.pointerId);
+    },
+
+    MSPointerOut : function(event) {
+        var e = this.prepareEvent(event);
+        dispatcher.leaveOut(e);
+    },
+
+    MSPointerOver : function(event) {
+        var e = this.prepareEvent(event);
+        dispatcher.enterOver(e);
+    },
+
+    MSPointerCancel : function(event) {
+        var e = this.prepareEvent(event);
+        dispatcher.cancel(e);
+        this.cleanup(event.pointerId);
+    },
+
+    cleanup : function(id) {
+        pointerMap['delete'](id);
+    }
+};
+
+var navigator = window.navigator;
+if(navigator.msPointerEnabled) {
+    dispatcher.registerSource('ms', msEvents);
+} else {
+    dispatcher.registerSource('mouse', mouseEvents);
+    if(typeof window.ontouchstart !== 'undefined') {
+        dispatcher.registerSource('touch', touchEvents);
+    }
+}
+
+dispatcher.register(doc);
+
+}));
+
+/* end: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointernative.js */
+/* begin: ../../node_modules/bem-core/common.blocks/keyboard/__codes/keyboard__codes.js */
+/**
+ * @module keyboard__codes
+ */
+modules.define('keyboard__codes', function(provide) {
+
+provide(/** @exports */{
+    /** @type {Number} */
+    BACKSPACE : 8,
+    /** @type {Number} */
+    TAB : 9,
+    /** @type {Number} */
+    ENTER : 13,
+    /** @type {Number} */
+    CAPS_LOCK : 20,
+    /** @type {Number} */
+    ESC : 27,
+    /** @type {Number} */
+    SPACE : 32,
+    /** @type {Number} */
+    PAGE_UP : 33,
+    /** @type {Number} */
+    PAGE_DOWN : 34,
+    /** @type {Number} */
+    END : 35,
+    /** @type {Number} */
+    HOME : 36,
+    /** @type {Number} */
+    LEFT : 37,
+    /** @type {Number} */
+    UP : 38,
+    /** @type {Number} */
+    RIGHT : 39,
+    /** @type {Number} */
+    DOWN : 40,
+    /** @type {Number} */
+    INSERT : 45,
+    /** @type {Number} */
+    DELETE : 46
+});
+
+});
+
+/* end: ../../node_modules/bem-core/common.blocks/keyboard/__codes/keyboard__codes.js */
+/* begin: ../../node_modules/bem-components/common.blocks/menu/__item/menu__item.js */
+/**
+ * @module menu__item
+ */
+
+modules.define('menu__item', ['i-bem-dom'], function(provide, bemDom) {
+
+/**
+ * @exports
+ * @class menu__item
+ * @bem
+ *
+ * @param val Value of item
+ */
+provide(bemDom.declElem('menu', 'item', /** @lends menu__item.prototype */{
+    beforeSetMod : {
+        'hovered' : {
+            'true' : function() {
+                return !this.hasMod('disabled');
+            }
+        }
+    },
+
+    onSetMod : {
+        'js' : {
+            'inited' : function() {
+                this._domEvents().on('pointerleave', this._onPointerLeave);
+            }
+        },
+
+        'disabled' : {
+            'true' : function() {
+                this
+                    .delMod('hovered')
+                    .domElem.attr('aria-disabled', true);
+            },
+            '' : function() {
+                this.domElem.removeAttr('aria-disabled');
+            }
+        },
+
+        'checked' : {
+            '*' : function(_, modVal) {
+                this.domElem.attr('aria-checked', !!modVal);
+            }
+        }
+    },
+
+    /**
+     * Checks whether given value is equal to current value
+     * @param {String|Number} val
+     * @returns {Boolean}
+     */
+    isValEq : function(val) {
+        // NOTE: String(true) == String(1) -> false
+        return String(this.params.val) === String(val);
+    },
+
+    /**
+     * Returns item value
+     * @returns {*}
+     */
+    getVal : function() {
+        return this.params.val;
+    },
+
+    /**
+     * Returns item text
+     * @returns {String}
+     */
+    getText : function() {
+        return this.params.text || this.domElem.text();
+    },
+
+    _onPointerOver : function() {
+        this.setMod('hovered');
+    },
+
+    _onPointerLeave : function() {
+        this.delMod('hovered');
+    },
+
+    _onPointerClick : function() {
+        this.hasMod('disabled') || this._emit('click', { source : 'pointer' });
+    }
+}, /** @lends menu__item */{
+    lazyInit : true,
+    onInit : function() {
+        var ptp = this.prototype;
+
+        this._domEvents()
+            .on('pointerover', ptp._onPointerOver)
+            .on('pointerclick', ptp._onPointerClick);
+    }
+}));
+
+});
+
+/* end: ../../node_modules/bem-components/common.blocks/menu/__item/menu__item.js */
 /* begin: ../../node_modules/bem-core/common.blocks/loader/_type/loader_type_js.js */
 /**
  * @module loader_type_js
@@ -4383,6 +5909,49 @@ provide({ EventManagerFactory : EventManagerFactory });
 });
 
 /* end: ../../node_modules/bem-core/common.blocks/i-bem-dom/__events/_type/i-bem-dom__events_type_dom.js */
+/* begin: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointerpressrelease.js */
+modules.define('jquery', function(provide, $) {
+
+$.each({
+    pointerpress : 'pointerdown',
+    pointerrelease : 'pointerup pointercancel'
+}, function(fix, origEvent) {
+    function eventHandler(e) {
+        if(e.which === 1) {
+            var fixedEvent = cloneEvent(e);
+            fixedEvent.type = fix;
+            fixedEvent.originalEvent = e;
+            return $.event.dispatch.call(this, fixedEvent);
+        }
+    }
+
+    $.event.special[fix] = {
+        setup : function() {
+            $(this).on(origEvent, eventHandler);
+            return false;
+        },
+        teardown : function() {
+            $(this).off(origEvent, eventHandler);
+            return false;
+        }
+    };
+});
+
+function cloneEvent(event) {
+    var eventCopy = $.extend(new $.Event(), event);
+    if(event.preventDefault) {
+        eventCopy.preventDefault = function() {
+            event.preventDefault();
+        };
+    }
+    return eventCopy;
+}
+
+provide($);
+
+});
+
+/* end: ../../node_modules/bem-core/common.blocks/jquery/__event/_type/jquery__event_type_pointerpressrelease.js */
 
 var BEMHTML;
 

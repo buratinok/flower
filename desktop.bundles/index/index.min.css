@@ -83,6 +83,51 @@ body, html{
 
 
 
+.menu {
+    overflow-y: auto;
+}
+
+
+
+.menu{
+    grid-column: 1;
+    grid-row: 1;
+}
+
+
+
+.menu__flower{
+    position: absolute;
+}
+
+
+
+.menu__flower .image{
+        width: 140px;
+        height: 280px;
+    }
+
+
+
+.menu__flower_display_none{
+    display: none;
+     }
+
+
+
+.menu__item {
+    -ms-touch-action: manipulation;
+        touch-action: manipulation;
+}
+
+
+
+.image {
+    border: 0;
+}
+
+
+
 .content__text{
     grid-column: 1;
     grid-row: 2;

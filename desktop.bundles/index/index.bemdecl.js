@@ -73,6 +73,38 @@ exports.blocks = [
         "name": "svg"
     },
     {
+        "name": "menu"
+    },
+    {
+        "name": "menu",
+        "elems": [
+            {
+                "name": "flower"
+            }
+        ]
+    },
+    {
+        "name": "menu",
+        "elems": [
+            {
+                "name": "flower",
+                "mods": [
+                    {
+                        "name": "display",
+                        "vals": [
+                            {
+                                "name": "none"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "name": "image"
+    },
+    {
         "name": "content",
         "elems": [
             {

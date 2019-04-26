@@ -33,6 +33,31 @@ module.exports = {
                         tag: 'svg',
                     }]
                 },
+                {
+                  block: 'menu',
+                  tag: 'menu',
+                  content:['https://placeimg.com/340/480/any',
+                      'https://placeimg.com/140/480/any',
+                      'https://placeimg.com/240/480/any',
+                      'https://placeimg.com/440/480/any'
+                     ].map((url)=>{
+                      return{
+
+                          elem: 'flower',
+                          elemMods:{display:'none' },
+                          attrs:{href:'#'},
+                          tag:'a',
+                              content:[
+                          {
+                              block: 'image',
+                              url: url,
+                              alt: 'BEM'
+                          },
+
+                      ]
+                      }
+                  })
+                },
                 {elem: 'text',
                     mix:{block:'flex', mods:{direct: 'column',center: 'start'}},
                 content: [

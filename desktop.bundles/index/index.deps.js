@@ -129,6 +129,65 @@ exports.deps = [
         "block": "svg"
     },
     {
+        "block": "menu"
+    },
+    {
+        "block": "control"
+    },
+    {
+        "block": "jquery",
+        "elem": "event"
+    },
+    {
+        "block": "jquery",
+        "elem": "event",
+        "mod": "type"
+    },
+    {
+        "block": "jquery",
+        "elem": "event",
+        "mod": "type",
+        "val": "pointerclick"
+    },
+    {
+        "block": "jquery",
+        "elem": "event",
+        "mod": "type",
+        "val": "pointernative"
+    },
+    {
+        "block": "keyboard",
+        "elem": "codes"
+    },
+    {
+        "block": "menu",
+        "mod": "focused"
+    },
+    {
+        "block": "menu",
+        "elem": "item"
+    },
+    {
+        "block": "menu",
+        "elem": "group"
+    },
+    {
+        "block": "menu",
+        "elem": "group-title"
+    },
+    {
+        "block": "menu",
+        "elem": "flower"
+    },
+    {
+        "block": "menu",
+        "elem": "flower",
+        "mod": "display"
+    },
+    {
+        "block": "image"
+    },
+    {
         "block": "content",
         "elem": "text"
     },
@@ -162,5 +221,28 @@ exports.deps = [
         "elem": "init",
         "mod": "auto",
         "val": true
+    },
+    {
+        "block": "jquery",
+        "elem": "event",
+        "mod": "type",
+        "val": "pointer"
+    },
+    {
+        "block": "jquery",
+        "elem": "event",
+        "mod": "type",
+        "val": "pointerpressrelease"
+    },
+    {
+        "block": "menu",
+        "mod": "focused",
+        "val": true
+    },
+    {
+        "block": "menu",
+        "elem": "flower",
+        "mod": "display",
+        "val": "none"
     }
 ];

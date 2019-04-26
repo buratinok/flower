@@ -30,7 +30,7 @@ Snap.load("assets/image/flower.svg", function (f) {
     g27 = f.select('#flower_27');
     g28 = f.select('#flower_28');
     g29 = f.select('#flower_29');
-    g = s.group(g2,g3,g4,g5,g6,g7,g8,g10,g11,g13,g14,g16,g17,g18,g19,g20,g21,g22,g23,g24,g25,g26,g27,g28,g29);
+    var g = s.group(g2,g3,g4,g5,g6,g7,g8,g10,g11,g13,g14,g16,g17,g18,g19,g20,g21,g22,g23,g24,g25,g26,g27,g28,g29);
 
     function atributs(obj){
         obj.attr({
@@ -41,14 +41,49 @@ Snap.load("assets/image/flower.svg", function (f) {
         });
     };
     atributs(g);
-    function twist(obj,x,y,r,length){
+    function twist(obj,x,y,r,length) {
         var start = obj.transform();
-        obj.animate({transform: 't'+x+','+y+','+ 'r'+r },length,function(){
-            obj.animate({transform: start},length,function(){
-                twist(obj,x,y,r,length);
+        var petal = document.querySelectorAll('.menu__flower');
+        obj.animate({transform: 't' + x + ',' + y + ',' + 'r' + r}, length, function () {
+            obj.animate({transform: start}, length, function () {
+                twist(obj, x, y, r, length);
             })
-        })
+        })}
+     function foto(obj, index){
+         var start = obj.transform();
+         var petal = document.querySelectorAll('.menu__flower');
+        obj.mouseover(
+            function (){
+                //var thisBox = this.getBBox();
+                obj.attr({
+                    fill: "#e66f5b",
+                });
+
+                for (var i = 0; i <petal.length; i++){
+                    petal[index].classList.remove('menu__flower_display_none');
+                }
+            },
+        );
+        obj.mouseout(
+            function (){
+                obj.attr({
+                    fill: "#fff",
+                });
+                var petal = document.querySelectorAll('.menu__flower');
+                for (var i = 0; i <petal.length; i++){
+                    petal[index].classList.add('menu__flower_display_none');
+                }
+            },
+        );
+         obj.click(
+
+        )
+
     };
+    foto(g2, 0);
+    foto(g3, 1);
+    foto(g8, 2);
+    foto(g7, 3);
     twist(g2,-5, 0, -5, 2000);
     twist(g3,2, 0, 5, 4000);
     twist(g4,-5, 10, 0, 4000);
@@ -69,17 +104,13 @@ Snap.load("assets/image/flower.svg", function (f) {
     twist(g24,5, 0, 5, 5000);
     twist(g25,5, 0, 5, 5000);
     twist(g26,5, 0, 5, 5000);
+    twist(g27,0, 0, 0, 0);
     twist(g28,10, -5, 2, 2000);
     twist(g29,-7, 10, 2, 3000);
-  /*          g.hover(
-                function (){
-                    g.attr({
-                        fill: "#f0f",
-                        stroke: "blue",
-                        strokeWidth: 4
-                    });
-                },
 
+
+
+/*
         function animOn() {
             g.animate({
                 transform: "t10,-300, r0"
@@ -89,9 +120,9 @@ Snap.load("assets/image/flower.svg", function (f) {
             g.nimate({
                 transform: "t10,305, r50"
             }, 4500, mina.easeinout);
-        }
-    );
-   // s.append(ga)*/
+        }*/
+
+
     s.append(g)
 })
 })(jQuery);
